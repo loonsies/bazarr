@@ -79,6 +79,18 @@ def _get_scores(media_type, min_movie=None, min_ep=None):
     return handler.get_scores(min_score_)
 
 
+def _get_provider_min_scores(media_type, max_score):
+    exceptions = settings.general.minimum_score_provider_exceptions if media_type == "series" else \
+        settings.general.minimum_score_movie_provider_exceptions
+    provider_min_scores = {}
+
+    for exception in exceptions:
+        provider, _, score = exception.partition(':')
+        provider_min_scores[provider] = int(int(score) * max_score / 100)
+
+    return provider_min_scores
+
+
 def get_ban_list(profile_id):
     if profile_id:
         profile = get_profiles_list(profile_id)

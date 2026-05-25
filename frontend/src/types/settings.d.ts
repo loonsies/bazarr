@@ -50,7 +50,9 @@ declare namespace Settings {
     ip: string;
     multithreading: boolean;
     minimum_score: number;
+    minimum_score_provider_exceptions: string[];
     minimum_score_movie: number;
+    minimum_score_movie_provider_exceptions: string[];
     movie_default_enabled: boolean;
     movie_default_profile?: number;
     serie_default_enabled: boolean;

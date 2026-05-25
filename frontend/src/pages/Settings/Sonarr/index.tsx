@@ -9,6 +9,7 @@ import {
   MultiSelector,
   Number,
   PathMappingTable,
+  ProviderScoreExceptions,
   Section,
   Selector,
   Slider,
@@ -61,6 +62,14 @@ const SettingsSonarrView: FunctionComponent = () => {
             label="Minimum Score For Episodes"
             settingKey="settings-general-minimum_score"
           ></Slider>
+          <ProviderScoreExceptions
+            label="Minimum Score Exceptions"
+            settingKey="settings-general-minimum_score_provider_exceptions"
+            defaultScoreKey="settings-general-minimum_score"
+          ></ProviderScoreExceptions>
+          <Message>
+            Provider exceptions are removed when a provider is disabled.
+          </Message>
           <Chips
             label="Excluded Tags"
             settingKey="settings-sonarr-excluded_tags"

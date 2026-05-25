@@ -10,7 +10,7 @@ import rarfile
 
 from dogpile.cache.region import register_backend as register_cache_backend
 
-from app.config import settings, configure_captcha_func, write_config
+from app.config import settings, configure_captcha_func, filter_provider_score_exceptions, write_config
 from app.get_args import args
 from app.logger import configure_logging
 from utilities.binaries import get_binary, BinaryNotFound
@@ -178,6 +178,12 @@ from subliminal_patch.extensions import provider_registry  # noqa E401
 existing_providers = provider_registry.names()
 enabled_providers = settings.general.enabled_providers
 settings.general.enabled_providers = [x for x in enabled_providers if x in existing_providers]
+settings.general.minimum_score_provider_exceptions = filter_provider_score_exceptions(
+    settings.general.minimum_score_provider_exceptions,
+    settings.general.enabled_providers)
+settings.general.minimum_score_movie_provider_exceptions = filter_provider_score_exceptions(
+    settings.general.minimum_score_movie_provider_exceptions,
+    settings.general.enabled_providers)
 write_config()
 
 

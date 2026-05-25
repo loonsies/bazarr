@@ -55,6 +55,50 @@ def validate_tags(tags):
     return all(re.match( r'^[a-z0-9_-]+$', item) for item in tags)
 
 
+def validate_provider_score_exceptions(exceptions):
+    if not exceptions:
+        return True
+
+    for exception in exceptions:
+        if not isinstance(exception, str):
+            return False
+
+        provider, separator, score = exception.partition(':')
+        if separator != ':':
+            return False
+
+        if not re.match(r'^[a-z0-9_-]+$', provider):
+            return False
+
+        if not score.isdigit():
+            return False
+
+        if not 0 <= int(score) <= 100:
+            return False
+
+    return True
+
+
+def filter_provider_score_exceptions(exceptions, providers):
+    if not exceptions or not isinstance(exceptions, list):
+        return []
+
+    active_providers = set(providers)
+    filtered_exceptions = []
+    filtered_providers = set()
+
+    for exception in exceptions:
+        if not isinstance(exception, str):
+            continue
+
+        provider = exception.partition(':')[0]
+        if provider in active_providers and provider not in filtered_providers:
+            filtered_exceptions.append(exception)
+            filtered_providers.add(provider)
+
+    return filtered_exceptions
+
+
 ONE_HUNDRED_YEARS_IN_MINUTES = 52560000
 ONE_HUNDRED_YEARS_IN_HOURS = 876000
 
@@ -97,6 +141,8 @@ validators = [
     Validator('general.auto_update', must_exist=True, default=True, is_type_of=bool),
     Validator('general.single_language', must_exist=True, default=False, is_type_of=bool),
     Validator('general.minimum_score', must_exist=True, default=90, is_type_of=int, gte=0, lte=100),
+    Validator('general.minimum_score_provider_exceptions', must_exist=True, default=[], is_type_of=list,
+              condition=validate_provider_score_exceptions),
     Validator('general.use_scenename', must_exist=True, default=True, is_type_of=bool),
     Validator('general.use_postprocessing', must_exist=True, default=False, is_type_of=bool),
     Validator('general.postprocessing_cmd', must_exist=True, default='', is_type_of=str),
@@ -126,6 +172,8 @@ validators = [
     Validator('general.theme', must_exist=True, default='auto', is_type_of=str,
               is_in=['auto', 'light', 'dark']),
     Validator('general.minimum_score_movie', must_exist=True, default=70, is_type_of=int, gte=0, lte=100),
+    Validator('general.minimum_score_movie_provider_exceptions', must_exist=True, default=[], is_type_of=list,
+              condition=validate_provider_score_exceptions),
     Validator('general.use_embedded_subs', must_exist=True, default=True, is_type_of=bool),
     Validator('general.embedded_subs_show_desired', must_exist=True, default=True, is_type_of=bool),
     Validator('general.utf8_encode', must_exist=True, default=True, is_type_of=bool),
@@ -565,6 +613,8 @@ array_keys = ['excluded_tags',
               'excluded_series_types',
               'enabled_providers',
               'enabled_integrations',
+              'minimum_score_provider_exceptions',
+              'minimum_score_movie_provider_exceptions',
               'path_mappings',
               'path_mappings_movie',
               'remove_profile_tags',
@@ -688,7 +738,7 @@ def save_settings(settings_items):
                 pass
 
         # Make sure empty language list are stored correctly
-        if settings_keys[-1] in array_keys and value[0] in empty_values:
+        if settings_keys[-1] in array_keys and value and value[0] in empty_values:
             value = []
 
         # Handle path mappings settings since they are array in array
@@ -870,6 +920,20 @@ def save_settings(settings_items):
 
     if update_subzero:
         settings.general.subzero_mods = ','.join(subzero_mods)
+
+    active_providers = settings.general.enabled_providers
+    try:
+        from subliminal_patch.extensions import provider_registry
+        existing_providers = provider_registry.names()
+        active_providers = [provider for provider in active_providers if provider in existing_providers]
+    except Exception:
+        pass
+    settings.general.minimum_score_provider_exceptions = filter_provider_score_exceptions(
+        settings.general.minimum_score_provider_exceptions,
+        active_providers)
+    settings.general.minimum_score_movie_provider_exceptions = filter_provider_score_exceptions(
+        settings.general.minimum_score_movie_provider_exceptions,
+        active_providers)
 
     try:
         settings.validators.validate()

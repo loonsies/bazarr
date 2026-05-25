@@ -524,7 +524,7 @@ class SZProviderPool(ProviderPool):
         return True
 
     def download_best_subtitles(self, subtitles, video, languages, min_score=0, hearing_impaired=False, only_one=False,
-                                compute_score=None, use_original_format=False):
+                                compute_score=None, use_original_format=False, provider_min_scores=None):
         """Download the best matching subtitles.
 
         patch:
@@ -583,10 +583,16 @@ class SZProviderPool(ProviderPool):
         downloaded_subtitles = []
         for subtitle, score, score_without_hash, matches, orig_matches in scored_subtitles:
             # check score
-            if score < min_score:
-                min_score_in_percent = round(min_score * 100 / max_score, 2) if min_score > 0 else 0
+            subtitle_min_score = provider_min_scores.get(subtitle.provider_name, min_score) if provider_min_scores \
+                else min_score
+
+            if score < subtitle_min_score:
+                min_score_in_percent = round(subtitle_min_score * 100 / max_score, 2) if subtitle_min_score > 0 else 0
                 logger.info('%r: Score %d is below min_score: %d out of %d (or %r%%)',
-                            subtitle, score, min_score, max_score, min_score_in_percent)
+                            subtitle, score, subtitle_min_score, max_score, min_score_in_percent)
+                if provider_min_scores:
+                    # A later subtitle can still match a provider-specific minimum score.
+                    continue
                 break
 
             # stop when all languages are downloaded
@@ -1086,7 +1092,7 @@ def download_subtitles(subtitles, pool_class=ProviderPool, **kwargs):
 
 
 def download_best_subtitles(videos, languages, min_score=0, hearing_impaired=False, only_one=False, compute_score=None,
-                            pool_class=ProviderPool, throttle_time=0, **kwargs):
+                            pool_class=ProviderPool, throttle_time=0, provider_min_scores=None, **kwargs):
     r"""List and download the best matching subtitles.
 
     The `videos` must pass the `languages` and `undefined` (`only_one`) checks of :func:`check_video`.
@@ -1130,7 +1136,8 @@ def download_best_subtitles(videos, languages, min_score=0, hearing_impaired=Fal
             subtitles = pool.download_best_subtitles(pool.list_subtitles(video, languages - video.subtitle_languages),
                                                      video, languages, min_score=min_score,
                                                      hearing_impaired=hearing_impaired, only_one=only_one,
-                                                     compute_score=compute_score)
+                                                     compute_score=compute_score,
+                                                     provider_min_scores=provider_min_scores)
             logger.info('Downloaded %d subtitle(s)', len(subtitles))
             downloaded_subtitles[video].extend(subtitles)
 

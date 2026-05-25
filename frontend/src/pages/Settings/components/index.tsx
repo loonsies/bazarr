@@ -118,6 +118,7 @@ export * from "./Layout";
 export { default as Layout } from "./Layout";
 export { default as LayoutModal } from "./LayoutModal";
 export * from "./Message";
+export * from "./ProviderScoreExceptions";
 export * from "./Section";
 export * from "./collapse";
 export { default as CollapseBox } from "./collapse";

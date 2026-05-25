@@ -19,7 +19,7 @@ from utilities.helper import get_target_folder, force_unicode
 from languages.get_languages import alpha3_from_alpha2
 
 from .pool import update_pools, _get_pool
-from .utils import get_video, _get_lang_obj, _get_scores, _set_forced_providers
+from .utils import get_video, _get_lang_obj, _get_provider_min_scores, _get_scores, _set_forced_providers
 from .processing import process_subtitle
 
 
@@ -58,6 +58,7 @@ def generate_subtitles(path, languages, audio_language, sceneName, title, media_
         minimum_score = settings.general.minimum_score
         minimum_score_movie = settings.general.minimum_score_movie
         min_score, max_score, scores = _get_scores(media_type, minimum_score_movie, minimum_score)
+        provider_min_scores = _get_provider_min_scores(media_type, max_score)
 
         subz_mods = get_array_from(settings.general.subzero_mods)
         saved_any = False
@@ -65,6 +66,7 @@ def generate_subtitles(path, languages, audio_language, sceneName, title, media_
         if providers:
             if forced_minimum_score:
                 min_score = int(forced_minimum_score) + 1
+                provider_min_scores = None
             for language in language_set:
                 # confirm if language is still missing or if cutoff has been reached
                 if check_if_still_required and language not in check_missing_languages(path, media_type):
@@ -78,6 +80,7 @@ def generate_subtitles(path, languages, audio_language, sceneName, title, media_
                                                                        languages={language},
                                                                        pool_instance=pool,
                                                                        min_score=int(min_score),
+                                                                       provider_min_scores=provider_min_scores,
                                                                        hearing_impaired=hi_required,
                                                                        compute_score=ComputeScore(get_scores()),
                                                                        use_original_format=original_format in (1, "1", "True", True))

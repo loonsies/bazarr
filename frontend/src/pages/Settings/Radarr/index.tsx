@@ -8,6 +8,7 @@ import {
   Message,
   Number,
   PathMappingTable,
+  ProviderScoreExceptions,
   Section,
   Selector,
   Slider,
@@ -59,6 +60,14 @@ const SettingsRadarrView: FunctionComponent = () => {
             label="Minimum Score For Movies"
             settingKey="settings-general-minimum_score_movie"
           ></Slider>
+          <ProviderScoreExceptions
+            label="Minimum Score Exceptions"
+            settingKey="settings-general-minimum_score_movie_provider_exceptions"
+            defaultScoreKey="settings-general-minimum_score_movie"
+          ></ProviderScoreExceptions>
+          <Message>
+            Provider exceptions are removed when a provider is disabled.
+          </Message>
           <Chips
             label="Excluded Tags"
             settingKey="settings-radarr-excluded_tags"
